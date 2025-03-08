@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Yo-Yo - Walk the Dog Trick</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #000; /* Black background */
+            font-family: Arial, sans-serif;
+            text-align: center;
+            color: white; /* Default text color set to white */
+        }
+        .title {
+            font-size: 48px; /* Larger font size for the title */
+            margin-bottom: 10px; /* Space below the title */
+            color: #ff6347; /* Bright color for the title */
+            position: relative; /* Enable z-index control */
+            z-index: 20; /* Higher z-index to bring title in front */
+        }
+        .instructions {
+            font-size: 28px; /* Larger font size for instructions */
+            color: #fff; /* White color for instructions */
+            position: relative;
+            z-index: 10; /* Lower z-index than the title */
+            margin-bottom: 20px; /* Add space below instructions */
+        }
+        .yoyo-container {
+            position: relative;
+            width: 800px; /* Adjusted container width */
+            height: 400px;
+            border: 2px solid #fff; /* White border */
+            background: #222; /* Darker container background for contrast */
+            overflow: hidden;
+        }
+        .string {
+            position: absolute;
+            top: 0; /* Start from the top */
+            left: 50%;
+            width: 2px;
+            background: white; /* White string */
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+        .yoyo {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            background: conic-gradient(
+                #ff6347 0% 12.5%, 
+                #4169e1 12.5% 25%, 
+                #ff6347 25% 37.5%, 
+                #4169e1 37.5% 50%, 
+                #ff6347 50% 62.5%, 
+                #4169e1 62.5% 75%, 
+                #ff6347 75% 87.5%, 
+                #4169e1 87.5% 100%
+            );
+            border-radius: 50%;
+            transform: translate(-50%, 0);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4), 0 0 15px rgba(255, 0, 0, 0.4);
+            cursor: grab;
+            transition: transform 0.3s ease-out;
+        }
+        .yoyo:active {
+            cursor: grabbing;
+        }
+        .animation-guide {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 69, 0, 0.4);
+            border-radius: 50%;
+            position: absolute;
+            top: 30px; /* Initial position for bounce */
+            left: calc(25% - 30px); /* Centered left of the yo-yo */
+            transform: translateX(-50%);
+            animation: bounce 1s ease-in-out infinite;
+            pointer-events: none;
+            box-shadow: 0 6px 12px rgba(169, 169, 169, 0.8); /* Gray shadow for the bouncing blob */
+            z-index: 0; /* Ensure it is behind the yo-yo */
+        }
+        @keyframes bounce {
+            0% { top: 30px; }
+            25% { top: 80px; }
+            50% { top: 30px; }
+            75% { top: 80px; }
+            100% { top: 30px; }
+        }
+        .arrow {
+            position: absolute;
+            top: 10px;
+            left: calc(25% - 30px); /* Align arrow with bouncing circle */
+            transform: translateX(-50%);
+            font-size: 30px;
+            color: #fff; /* White color for the arrow */
+            pointer-events: none;
+        }
+        .arrow::after {
+            content: "↓";
+            font-size: 40px;
+        }
+        .message {
+            font-size: 28px; /* Larger font size for success message */
+            color: lime; /* Green for the success message */
+            margin-top: 20px; /* Add space above */
+            display: none; /* Hidden by default */
+        }
+        .try-again {
+            font-size: 28px; /* Larger font size for Try Again message */
+            color: red; /* Change color for Try Again message */
+            margin-top: 20px; /* Add space above */
+            display: none; /* Hidden by default */
+        }
+        .reset-btn {
+            margin-top: 20px;
+            padding: 10px 15px;
+            font-size: 22px; /* Larger font size for button */
+            background-color: #444; /* Darker button background */
+            color: white; /* White text */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .reset-btn:hover {
+            background-color: #555; /* Slightly lighter on hover */
+        }
+        .hidden {
+            display: none; /* Class to hide elements */
+        }
+        .blank-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black; /* Black overlay to blank the screen */
+            z-index: 10; /* Ensure it is on top */
+            display: none; /* Hidden by default */
+            color: white; /* White text color for the instructions */
+            font-size: 28px; /* Larger font size for blank screen text */
+            display: flex; /* Use flex to center the text */
+            align-items: center; /* Center vertically */
+            justify-content: center; /* Center horizontally */
+            text-align: center; /* Center text */
+        }
+    </style>
+</head>
+<body>
+    <div class="title">Walk the Dog</div> <!-- Title Added -->
+    <div class="instructions">
+        <p>Click, drag, and hold until the yo-yo is rolling for at least 1 second!</p> <!-- Updated instructions -->
+    </div>
+    <div class="yoyo-container" id="container">
+        <div class="string" id="string"></div>
+        <div class="yoyo" id="yoyo"></div>
+        <div class="animation-guide" id="animationGuide"></div> <!-- Bouncing shadow circle -->
+        <div class="arrow"></div> <!-- Fixed arrow cursor at the top center of the yo-yo -->
+    </div>
+    <div class="message" id="message">Good job!</div> <!-- Good job message -->
+    <div class="message try-again" id="tryAgainMessage">Try Again!</div> <!-- Try Again message -->
+    <button class="reset-btn" id="resetButton">Reset</button> <!-- Reset button -->
+    <div class="blank-screen" id="blankScreen">
+        <div>
+            <p>Remember, to walk the dog:</p>
+            <p>Click and drag down continuously until the yo-yo is rolling!</p>
+        </div>
+    </div> <!-- Element for the blank screen -->
+
+    <script>
+        // Element references
+        const yoyo = document.getElementById("yoyo");
+        const string = document.getElementById("string");
+        const container = document.getElementById("container");
+        const animationGuide = document.getElementById("animationGuide");
+        const arrow = document.querySelector(".arrow");
+        const message = document.getElementById("message");
+        const tryAgainMessage = document.getElementById("tryAgainMessage");
+        const resetButton = document.getElementById("resetButton");
+        const blankScreen = document.getElementById("blankScreen");
+
+        // Dimensions (in pixels)
+        let containerWidth = container.offsetWidth; // 800px
+        const containerHeight = 400;
+        const floorHeight = 4; // Floor line height
+        const yoyoDiameter = 60;
+        const maxYoyoTop = containerHeight - floorHeight - yoyoDiameter; // 336px
+
+        // Rolling parameters
+        const rollVelocity = 1; // Speed of rolling
+        const fallRotationRate = 720 / (maxYoyoTop / 10); // Rotation during fall
+        
+        // Timing variable
+        let rollStartTime = 0; // Start time for rolling
+        const minimumRollTime = 1000; // Minimum roll time in milliseconds
+
+        // State variables
+        let isDragging = false;
+        let startY = 0;
+        let startTime = 0; // Track the start time of the drag
+        let isFalling = false;
+        let atBottom = false;
+        let rolling = false;
+        let comingBack = false;
+        let rotationAngle = 0; // Cumulative rotation in degrees
+        let rollAnimationRequest;
+        let completed = false; // New variable to track if animation is completed
+        const dragTimeThreshold = 16; // Minimum time (in milliseconds) to qualify as a drag
+
+        // Initialize the yo-yo's position and state
+        function initializeYoyo() {
+            containerWidth = container.offsetWidth;
+            yoyo.style.top = "0px";
+            yoyo.style.left = `${(containerWidth * 0.25) - (yoyoDiameter / 2)}px`;
+            yoyo.style.transform = "translate(-50%, 0)"; // No initial rotation
+            string.style.height = "0px";
+            string.style.left = yoyo.style.left;
+            yoyo.style.transition = "";
+            string.style.transition = "";
+            atBottom = false;
+            isFalling = false;
+            isDragging = false;
+            rolling = false;
+            comingBack = false;
+            rotationAngle = 0;
+            completed = false; // Reset completed state
+            rollStartTime = 0; // Reset roll start time
+            message.style.display = "none"; // Hide message on reset
+            tryAgainMessage.style.display = "none"; // Hide Try Again message on reset
+            blankScreen.style.display = "none"; // Hide the blank screen
+            cancelAnimationFrame(rollAnimationRequest);
+        }
+        initializeYoyo();
+
+        // Update the string's position so that it touches the top of the yo-yo
+        function updateStringPosition() {
+            const yoyoTop = parseFloat(yoyo.style.top);
+            string.style.height = `${yoyoTop}px`; // Adjust height to just touch the top of the yo-yo
+            string.style.left = yoyo.style.left;
+        }
+
+        // Continuous rolling animation when the yo-yo is at the bottom
+        function rollForever() {
+            let currentLeft = parseFloat(yoyo.style.left);
+            let newLeft = currentLeft + rollVelocity;
+            if (newLeft + yoyoDiameter / 2 > containerWidth) {
+                newLeft = containerWidth - yoyoDiameter / 2;
+            }
+            yoyo.style.left = `${newLeft}px`;
+            rotationAngle += rollVelocity * 6; // Apply rotation only during roll
+            yoyo.style.transform = `translate(-50%, 0) rotate(${rotationAngle}deg)`;
+            updateStringPosition();
+            if (!comingBack && !completed) {
+                rollAnimationRequest = requestAnimationFrame(rollForever);
+            }
+        }
+
+        // Animate the fall of the yo-yo
+        function fall() {
+            const currentTop = parseFloat(yoyo.style.top);
+            let newTop = currentTop + (maxYoyoTop / 30);
+            if (newTop >= maxYoyoTop) {
+                newTop = maxYoyoTop;
+                atBottom = true;
+                yoyo.style.top = `${newTop}px`;
+                updateStringPosition();
+                // Start rolling when at the bottom
+                rolling = true;
+                comingBack = false;
+                rollStartTime = performance.now(); // Record the time when it starts rolling
+                rollAnimationRequest = requestAnimationFrame(rollForever);
+            } else {
+                yoyo.style.top = `${newTop}px`;
+                rotationAngle += fallRotationRate; // Apply rotation only during fall
+                yoyo.style.transform = `translate(-50%, 0) rotate(${rotationAngle}deg)`;
+                updateStringPosition();
+                requestAnimationFrame(fall);
+            }
+        }
+
+        // Start dragging and setup necessary actions
+        function startAction(event) {
+            event.preventDefault();
+            if (isDragging || completed) return; // Prevent multiple starts while dragging or if completed
+
+            isDragging = true;
+            startY = event.touches ? event.touches[0].clientY : event.clientY;
+            startTime = performance.now(); // Record the start time of the drag
+
+            string.style.transition = "none";
+            yoyo.style.transition = "none";
+
+            // Track the drag motion
+            document.addEventListener("mousemove", detectDrag);
+            document.addEventListener("touchmove", detectDrag, { passive: false });
+            document.addEventListener("mouseup", stopDrag);
+            document.addEventListener("touchend", stopDrag);
+        }
+
+        // Detect drag and only update the yo-yo's vertical position if dragged
+        function detectDrag(event) {
+            if (isDragging) {
+                const currentY = event.touches ? event.touches[0].clientY : event.clientY;
+                const deltaY = currentY - startY;
+
+                // Only start falling if the drag time exceeds the threshold
+                const currentTime = performance.now();
+                const dragDuration = currentTime - startTime;
+
+                // Only allow yoyo to fall if dragged long enough and exceeds a minimum distance
+                if (dragDuration >= dragTimeThreshold && deltaY > 10 && !isFalling && !completed) {
+                    yoyo.style.top = `${Math.min(deltaY, maxYoyoTop)}px`;
+                    updateStringPosition();
+                    if (!isFalling) {
+                        isFalling = true;
+                        requestAnimationFrame(fall);
+                    }
+                }
+            }
+        }
+
+        // Stop drag function
+        function stopDrag() {
+            if (completed) return; // Prevent any further action if animation is completed
+
+            // Check if the yo-yo has successfully reached the bottom
+            if (atBottom && rolling) {
+                const rollDuration = performance.now() - rollStartTime; // Calculate rolling time
+
+                if (rollDuration >= minimumRollTime) {
+                    // If at the bottom and rolling for at least 1 second, show Good Job
+                    comingBack = true;
+                    rolling = false;
+                    cancelAnimationFrame(rollAnimationRequest);
+
+                    yoyo.style.transition = "top 0.6s ease-in-out, left 0.6s ease-in-out, transform 0.6s ease-in-out";
+                    string.style.transition = "height 0.6s ease-in-out, left 0.6s ease-in-out";
+                    yoyo.style.top = "0px"; // Reset to top position
+                    yoyo.style.left = `${(containerWidth * 0.25) - (yoyoDiameter / 2)}px`;
+                    rotationAngle += 720; // Spin during coming back
+                    yoyo.style.transform = `translate(-50%, 0) rotate(${rotationAngle}deg)`;
+                    updateStringPosition();
+
+                    // Show success message immediately
+                    completed = true; // Animation complete
+                    message.style.display = "block"; // Show Good job message
+                } else {
+                    // If it hasn't rolled for at least 1 second, show Try Again
+                    // Make it fall straight down to bottom immediately
+                    yoyo.style.transition = "top 0.5s ease-out"; // Adjust transition time for instant fall
+                    yoyo.style.top = `${maxYoyoTop}px`; // Make it fall straight down to bottom
+                    updateStringPosition();
+
+                    // Show Try Again message immediately
+                    tryAgainMessage.style.display = "block"; // Show Try Again message
+
+                    // Show the blank screen for 5 seconds before restart
+                    blankScreen.style.display = "flex"; // Show the blank screen
+                    setTimeout(() => {
+                        initializeYoyo(); // Reset after 5 seconds
+                    }, 5000); // 5000 milliseconds = 5 seconds
+                }
+            } else {
+                // If drag was released too early or not at the bottom
+                yoyo.style.transition = "top 0.5s ease-out"; // Adjust transition time for instant fall
+                yoyo.style.top = `${maxYoyoTop}px`; // Make it fall straight down to bottom
+                updateStringPosition();
+
+                // Show Try Again message immediately
+                tryAgainMessage.style.display = "block"; // Show Try Again message
+
+                // Show the blank screen for 5 seconds before restart
+                blankScreen.style.display = "flex"; // Show the blank screen
+                setTimeout(() => {
+                    initializeYoyo(); // Reset after 5 seconds
+                }, 5000); // 5000 milliseconds = 5 seconds
+            }
+
+            // Reset dragging states
+            isFalling = false;
+            isDragging = false;
+            document.removeEventListener("mousemove", detectDrag);
+            document.removeEventListener("touchmove", detectDrag);
+            document.removeEventListener("mouseup", stopDrag);
+            document.removeEventListener("touchend", stopDrag);
+        }
+
+        // Reset the game
+        resetButton.addEventListener("click", () => {
+            initializeYoyo();
+        });
+
+        yoyo.addEventListener("mousedown", startAction);
+        yoyo.addEventListener("touchstart", startAction, { passive: false });
+    </script>
+</body>
+</html>
